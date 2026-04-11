@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Profile - SIT Repository</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root { --sit-blue: #0d6efd; }
+        body { height: 100vh; overflow: hidden; background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        /* Fixed Header */
+        .admin-header { height: 70px; background: white; border-bottom: 1px solid #dee2e6; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
+        
+        /* Layout Containers */
+        .admin-content { height: calc(100vh - 70px); padding: 20px; display: flex; gap: 20px; }
+        .notification-panel { width: 35%; display: flex; flex-direction: column; gap: 15px; }
+        .data-panel { width: 65%; display: flex; flex-direction: column; gap: 15px; }
+
+        /* Card Styles */
+        .admin-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; border: 1px solid #e9ecef; }
+        .card-header { padding: 12px 15px; font-weight: 700; border-bottom: 1px solid #f1f1f1; color: var(--sit-blue); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .scroll-area { flex-grow: 1; overflow-y: auto; padding: 15px; }
+
+        /* Notification Styling */
+        .notif-box { background: #f9f9f9; border-left: 4px solid var(--sit-blue); border-radius: 6px; padding: 12px; margin-bottom: 12px; font-size: 0.85rem; color: var(--sit-blue); }
+        .notif-delete { border-left-color: #dc3545; }
+        .notif-account { border-left-color: #198754; }
+        .notif-position { border-left-color: #ffc107; }
+
+        /* Table Styling */
+        .table-wrapper { border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
+        table { font-size: 0.85rem; margin-bottom: 0 !important; color: var(--sit-blue); }
+        thead { position: sticky; top: 0; background: #0d6efd; color: white; z-index: 10; }
+        
+        /* Status Toggle Switch */
+        .form-switch .form-check-input { width: 2.5em; height: 1.2em; cursor: pointer; }
+
+        /* Navigation Buttons */
+        .btn-dashboard { color: var(--sit-blue); font-weight: 600; text-decoration: none; font-size: 0.9rem; }
+        .btn-dashboard:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <header class="admin-header shadow-sm">
+        <div class="d-flex align-items-center">
+            <img src="../assets/images/logo.png" alt="SIT Logo" width="45" class="me-3">
+            <h5 class="m-0 fw-bold" style="color: var(--sit-blue);">SETHU INSTITUTE OF TECHNOLOGY</h5>
+        </div>
+        <div class="d-flex align-items-center gap-4">
+            <a href="dashboard.html" class="btn-dashboard"><i class="bi bi-arrow-left-circle me-1"></i>Back to Dashboard</a>
+            <button onclick="logout()" class="btn btn-sm btn-outline-danger px-3 fw-bold">LOGOUT</button>
+        </div>
+    </header>
+
+    <main class="admin-content">
+        
+        <section class="notification-panel">
+            <div class="admin-card h-100">
+                <div class="card-header"><i class="bi bi-bell-fill me-2"></i>Action Requests</div>
+                <div id="notification-container" class="scroll-area">
+                    
+                    <h6 class="fw-bold small text-muted">PAPER DELETION REQUESTS</h6>
+                    <div id="deletion-requests">
+                        </div>
+
+                    <h6 class="fw-bold small text-muted mt-4">ACCOUNT CREATION REQUESTS</h6>
+                    <div id="account-requests">
+                        </div>
+
+                    <h6 class="fw-bold small text-muted mt-4">POSITION CHANGE REQUESTS</h6>
+                    <div id="position-requests">
+                        </div>
+
+                    <h6 class="fw-bold small text-muted mt-4">DEPARTMENT CHANGE REQUESTS</h6>
+                    <div id="department-requests"></div>
+
+                </div>
+            </div>
+        </section>
+
+        <section class="data-panel">
+            
+            <div class="admin-card" style="height: 50%;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>All Profile Details</span>
+                    <input type="text" id="profileSearch" class="form-control form-control-sm w-50" placeholder="Search by name...">
+                </div>
+                <div class="scroll-area">
+                    <div class="table-wrapper">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Faculty ID</th>
+                                    <th>Department</th>
+                                    <th>Pub Count</th>
+                                    <th>Position</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allProfilesTable">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3" style="height: 48%;">
+                <div class="col-md-6 h-100">
+                    <div class="admin-card h-100">
+                        <div class="card-header">Department Profile Count</div>
+                        <div class="scroll-area">
+                            <div class="table-wrapper">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr><th>Department</th><th>Total</th><th>Active</th><th>Inactive</th></tr>
+                                    </thead>
+                                    <tbody id="deptProfileCount">
+                                        </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 h-100">
+                    <div class="admin-card h-100">
+                        <div class="card-header">Department Paper Count</div>
+                        <div class="scroll-area">
+                            <div class="table-wrapper">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr><th>Department</th><th>Total</th><th>Journals</th><th>Conferences</th></tr>
+                                    </thead>
+                                    <tbody id="deptPaperCount">
+                                        </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SIT Repository | Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        /* Notification Design */
+        #popup {
+            display: none; position: fixed; top: 20px; right: 20px;
+            padding: 12px 24px; font-weight: 700; border-radius: 8px;
+            z-index: 2000; box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
+            background-color: #ffffff; min-width: 250px;
+        }
+
+        /* Filter Button: White background, Black text */
+        .btn-filter {
+            background-color: white !important;
+            color: black !important;
+            border: 1px solid #ced4da !important;
+            font-weight: 500;
+        }
+
+        /* Paper Card Layout */
+        .paper-card {
+            border: none; border-left: 5px solid #0d6efd;
+            border-radius: 8px; margin-bottom: 20px;
+            background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex; padding: 0; overflow: hidden; min-height: 160px;
+        }
+
+        .paper-main-content { flex: 1; padding: 15px 20px; }
+        
+        .paper-title { 
+            color: #0d6efd; font-weight: 700; font-size: 1.15rem; 
+            text-decoration: none; display: block; margin-bottom: 8px;
+        }
+
+        .paper-details { font-size: 0.9rem; color: #333; line-height: 1.6; }
+        .detail-bold { font-weight: 700; color: #222; }
+        .keywords-text { color: #888; font-size: 0.8rem; margin-top: 6px; }
+
+        /* Journal Details Row (Removed the box) */
+        .journal-details-row {
+            font-size: 0.9rem;
+            color: #333;
+            margin-top: 4px;
+        }
+
+        /* Middle Column: Type & Buttons */
+        .paper-actions {
+            width: 130px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 8px;
+            padding: 10px; border-right: 1px solid #f0f0f0;
+        }
+
+        .type-indicator {
+            width: 100%; text-align: center; padding: 6px;
+            font-size: 0.75rem; font-weight: 800; text-transform: uppercase;
+            border-radius: 4px; margin-bottom: 5px;
+        }
+        .type-journal { background-color: #0d6efd; color: white; }
+        .type-conference { background-color: #000000; color: white; }
+
+        /* Right Sidebar: Status & Photo */
+        .author-sidebar {
+            width: 165px; background-color: #fff;
+            display: flex; flex-direction: column;
+            align-items: center; padding: 12px;
+        }
+
+        .status-container {
+            width: 100%; text-align: center; margin-bottom: 10px;
+            font-size: 0.75rem; font-weight: 700; color: #000;
+        }
+        .active-text { color: #198754; font-weight: 800; }
+        .inactive-text { color: #dc3545; font-weight: 800; }
+
+        .author-img {
+            width: 125px; height: 135px; border-radius: 6px;
+            object-fit: cover; border: 1px solid #ddd; display: block;
+        }
+
+        /* Nav Profile Fix */
+        .profile-pic-nav {
+            width: 38px; height: 38px; border-radius: 50%;
+            border: 2px solid #0d6efd; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            background: #eee;
+        }
+        .profile-pic-nav img { width: 100%; height: 100%; object-fit: cover; }
+    </style>
+</head>
+<body class="bg-light">
+
+<header class="top-bar">
+    <div class="branding">
+        <a href="dashboard.html" style="text-decoration:none; color:inherit;">
+            <img src="../assets/images/logo.png" alt="SIT Logo">
+            <span>SETHU INSTITUTE OF TECHNOLOGY</span>
+        </a>
+    </div>
+    <div id="popup"></div>
+    <div class="ms-auto d-flex align-items-center pe-3">
+        <a href="profile.html" class="me-3" id="profileLink">
+            <div class="profile-pic-nav">
+                <img id="navProfilePic" src="../assets/images/default-user.png" alt="Profile">
+            </div>
+        </a>
+        <button onclick="logout()" class="btn btn-sm btn-outline-danger">Logout</button>
+    </div>
+</header>
+
+<div class="watermark"></div>
+
+<main class="container mt-4" style="position: relative; z-index: 5;">
+    <div class="row mb-4">
+        <div class="col-md-11 mx-auto text-center">
+            <h4 class="fw-bold mb-4">Research Paper Repository</h4>
+            
+            <div class="input-group mb-3 shadow-sm">
+                <button id="filterLabel" class="btn btn-filter dropdown-toggle" type="button" data-bs-toggle="dropdown">Filter By</button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" data-filter="title">Title</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="author_name">Author</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="journal_name">Journal Name</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="department">Department</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="keywords">Keywords</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="domain">Domain</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="year">Year</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="journal">Show Journals Only</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="conference">Show Conferences Only</a></li>
+                </ul>
+                <input type="text" id="searchInput" class="form-control" placeholder="Search publications...">
+                <button class="btn btn-primary px-4" id="searchBtn">Search</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-11 mx-auto">
+            <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size: 0.8rem;">Recent Publications</h6>
+            <div id="papersStack">
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="mt-2 text-muted">Loading research...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    function logout() {
+        localStorage.clear();
+        window.location.href = "index.html";
+    }
+
+    window.onload = function() {
+        if (!localStorage.getItem('facultyID')) {
+            window.location.href = "index.html";
+            return;
+        }
+        // Corrected to check both common keys used for profile pictures
+        const userPic = localStorage.getItem('userProfilePic') || localStorage.getItem('profilePic');
+        const navImg = document.getElementById('navProfilePic');
+        if (userPic && navImg) {
+            navImg.src = userPic;
+        }
+    };
+</script>
+
+<script src="../assets/js/dashboard.js"></script>
+
+</body>
+</html>
