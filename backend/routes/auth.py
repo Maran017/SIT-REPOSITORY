@@ -409,7 +409,7 @@ def delete_paper():
 # --- DELETE PROFILE ---
 @auth_bp.route('/delete-profile', methods=['POST'])
 def delete_profile():
-    verify_admin()  # Ensure only the admin can trigger this
+    verify_admin() 
     data = request.json
     faculty_id = data.get('faculty_id')
 
@@ -417,13 +417,24 @@ def delete_profile():
         return jsonify({"error": "Missing Faculty ID"}), 400
 
     try:
-        # This deletes the user and their nested 'papers' array permanently
+        # 1. FIND THE USER FIRST TO GET THEIR PAPERS
+        user = users_collection.find_one({"faculty_id": faculty_id})
+        if not user:
+            return jsonify({"error": "Profile not found"}), 404
+
+        # 2. LOOP THROUGH ALL PAPERS AND DELETE PHYSICAL FILES
+        for paper in user.get('papers', []):
+            file_path = paper.get('file_url')
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
+
+        # 3. DELETE THE USER DOCUMENT FROM MONGODB
         result = users_collection.delete_one({"faculty_id": faculty_id})
 
         if result.deleted_count > 0:
-            return jsonify({"message": f"Profile {faculty_id} deleted successfully"}), 200
+            return jsonify({"message": f"Profile and all associated files deleted successfully"}), 200
         else:
-            return jsonify({"error": "Profile not found"}), 404
+            return jsonify({"error": "Profile could not be removed"}), 404
 
     except Exception as e:
         print(f"Delete Profile Error: {e}")
@@ -623,7 +634,7 @@ def handle_position_decision():
         send_email(user['email'], subject, body)
         return jsonify({"message": "Position change declined"}), 200
 
-# --- 3. NEW: HANDLE PAPER DELETION REQUESTS ---
+# --- 3. HANDLE PAPER DELETION REQUESTS ---
 @auth_bp.route('/handle-paper-deletion', methods=['POST'])
 def handle_paper_deletion():
     verify_admin()
@@ -635,24 +646,30 @@ def handle_paper_deletion():
     user = users_collection.find_one({"faculty_id": faculty_id})
     if not user: return jsonify({"message": "User not found"}), 404
 
-    # Locate the paper title for the email notification
-    paper_title = "Research Paper"
+    # Locate the paper data to get the file path and title
+    paper_to_delete = None
     for p in user.get('papers', []):
         if p['file_id'] == file_id:
-            paper_title = p['title']
+            paper_to_delete = p
             break
 
-    if action == 'approve':
-        # Remove paper from the user's papers array
+    if action == 'approve' and paper_to_delete:
+        # 1. DELETE THE PHYSICAL FILE FROM THE UPLOADS FOLDER
+        file_path = paper_to_delete.get('file_url')
+        if file_path and os.path.exists(file_path):
+            os.remove(file_path)
+
+        # 2. REMOVE THE PAPER RECORD FROM MONGODB
         users_collection.update_one(
             {"faculty_id": faculty_id},
             {"$pull": {"papers": {"file_id": file_id}}}
         )
+        
         # EMAIL: deletion-success
         subject = "Paper Deletion Successful"
-        body = f"Dear {user['name']},\n\nas your request the paper ({paper_title}) has been deleted successfully."
+        body = f"Dear {user['name']},\n\nas your request the paper ({paper_to_delete['title']}) has been deleted successfully."
         send_email(user['email'], subject, body)
-        return jsonify({"message": "Paper deleted successfully"}), 200
+        return jsonify({"message": "Paper and physical file deleted successfully"}), 200
 
     else:
         # Revoke the request: set pending_deletion to False so it stays visible
@@ -661,10 +678,12 @@ def handle_paper_deletion():
             {"$set": {"papers.$.pending_deletion": False}}
         )
         # EMAIL: deletion-revoke
+        paper_title = paper_to_delete['title'] if paper_to_delete else "Research Paper"
         subject = "Paper Deletion Request Declined"
         body = f"Dear {user['name']},\n\nas your request the paper ({paper_title}) has not been deleted...for any queries please contact the SIT REPOSITORY ADMIN..."
         send_email(user['email'], subject, body)
         return jsonify({"message": "Deletion request declined"}), 200
+    
 # --- 4. NEW: DEPARTMENT CHNAGE REQUESTS ---
 @auth_bp.route('/request-department-change', methods=['POST'])
 def request_department_change():
