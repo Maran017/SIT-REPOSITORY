@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SIT Repository | Institutional Intelligence</title>
+    <title>SIT Repository</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -258,22 +258,61 @@
         const ctx = document.getElementById('barChart').getContext('2d');
         if(window.bChart) window.bChart.destroy();
         
-        const labels = Object.keys(window.siteData.deptStats);
-        const journalData = labels.map(l => window.siteData.deptStats[l].journals);
-        const confData = labels.map(l => window.siteData.deptStats[l].conferences);
+        // 1. Get the department names and SORT them alphabetically
+        // This ensures that if a new dept arrives, it "pushes" others to their correct alphabetical spot
+        const sortedDeptNames = Object.keys(window.siteData.deptStats).sort(); 
+        
+        // 2. Map the data so the bars stay perfectly aligned with the sorted names
+        const journalData = sortedDeptNames.map(dept => window.siteData.deptStats[dept].journals);
+        const confData = sortedDeptNames.map(dept => window.siteData.deptStats[dept].conferences);
 
         window.bChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: labels,
+                labels: sortedDeptNames, // The organized X-axis
                 datasets: [
-                    { label: 'Journals', data: journalData, backgroundColor: '#0d6efd' },
-                    { label: 'Conferences', data: confData, backgroundColor: '#000' }
+                    { 
+                        label: 'Journals', 
+                        data: journalData, 
+                        backgroundColor: '#0d6efd',
+                        borderRadius: 5 // Optional: makes it look cleaner
+                    },
+                    { 
+                        label: 'Conferences', 
+                        data: confData, 
+                        backgroundColor: '#000',
+                        borderRadius: 5
+                    }
                 ]
             },
-            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            options: { 
+                responsive: true, 
+                scales: { 
+                    y: { 
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1, // Fixes your Y-axis to whole numbers
+                            precision: 0
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: false, // Ensures no department name is hidden
+                            maxRotation: 45, // Tilts names so they don't overlap
+                            minRotation: 45
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
         });
     }
+
 
     function initLineChart() {
         const ctx = document.getElementById('lineChart').getContext('2d');
