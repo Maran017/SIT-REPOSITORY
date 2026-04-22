@@ -80,13 +80,20 @@ def upload_paper():
     # 1. CAPTURE ALL INCOMING DATA
     faculty_id = request.form.get('faculty_id')
     title = request.form.get('title')
-    journal_name = request.form.get('journal_name')  # NEW: Added
+    journal_name = request.form.get('journal_name')
     domain = request.form.get('domain')
-    keywords = request.form.get('keywords')
+    
+    # --- KEYWORD NORMALIZATION ---
+    # Captures raw input and converts "AI, ML, Cloud" into "AI/ML/Cloud"
+    # This satisfies the Professor's requirement while keeping your slash storage system.
+    raw_keywords = request.form.get('keywords', '')
+    keywords = raw_keywords.replace(',', '/').replace(' ', '')
+    # -----------------------------
+
     year = request.form.get('year')
-    volume = request.form.get('volume')            # NEW: Added
-    page_number = request.form.get('page_number')  # NEW: Added
-    pub_type = request.form.get('pub_type')        # NEW: Added
+    volume = request.form.get('volume')
+    page_number = request.form.get('page_number')
+    pub_type = request.form.get('pub_type')
     file = request.files.get('file')
 
     # 2. VALIDATION (Ensure core fields exist)
@@ -108,6 +115,7 @@ def upload_paper():
     file.save(temp_path)
     
     try:
+        # Using your PDF compression engine
         compress_pdf(temp_path, final_path)
         if os.path.exists(temp_path):
             os.remove(temp_path) 
@@ -119,18 +127,19 @@ def upload_paper():
     new_paper = {
         "file_id": file_id,
         "title": title,
-        "journal_name": journal_name,   # SAVED TO DB
+        "journal_name": journal_name,
         "domain": domain,
-        "keywords": keywords,
+        "keywords": keywords, # Stored in your preferred slash-separated format
         "year": year,
-        "volume": volume,               # SAVED TO DB
-        "page_number": page_number,     # SAVED TO DB
-        "pub_type": pub_type,           # SAVED TO DB (Crucial for Dashboard logic)
+        "volume": volume,
+        "page_number": page_number,
+        "pub_type": pub_type,
         "file_url": final_path,
         "created_at": datetime.utcnow()
     }
     
     # 6. UPDATE DATABASE
+    # Note: Using the exact faculty_id from the form to avoid case-mismatch errors
     users_collection.update_one(
         {"faculty_id": faculty_id},
         {"$push": {"papers": new_paper}}
@@ -195,11 +204,11 @@ def register():
 def login():
     data = request.json
     # Clean the input: remove spaces and force lowercase for the ID
-    faculty_id = str(data.get('faculty_id', '')).strip().lower()
+    faculty_id = str(data.get('faculty_id', '')).strip()
     password = str(data.get('password', ''))
 
     # Pull fresh from environment
-    target_admin = str(os.getenv("ADMIN_USERNAME", "")).strip().lower()
+    target_admin = str(os.getenv("ADMIN_USERNAME", "")).strip()
     target_pass = str(os.getenv("ADMIN_PASSWORD", ""))
 
     # 1. ADMIN CHECK (Matches .env)

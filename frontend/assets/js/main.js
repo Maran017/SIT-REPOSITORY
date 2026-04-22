@@ -113,7 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
         loginForm.addEventListener("submit", function (e) {
             e.preventDefault();
             
-            const facultyIdInput = document.getElementById("loginFacultyId").value.trim().toLowerCase();
+            const facultyIdInput = document.getElementById("loginFacultyId").value.trim();
             const passwordInput = document.getElementById("loginPassword").value;
 
             fetch('http://localhost:5000/auth/login', {
